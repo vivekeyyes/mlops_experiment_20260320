@@ -226,16 +226,16 @@ mlflow.log_metric("eval_accuracy", eval_accuracy)
 if eval_accuracy < ACCURACY_THRESHOLD:
     mlflow.log_param("accuracy_gate", "failed")
     raise RuntimeError(
-        f"❌ Accuracy gate failed: {eval_accuracy:.4f} < {ACCURACY_THRESHOLD}"
+        f" Accuracy gate failed: {eval_accuracy:.4f} < {ACCURACY_THRESHOLD}"
     )
 
 mlflow.log_param("accuracy_gate", "passed")
-print(f"✅ Accuracy gate passed: {eval_accuracy:.4f}")
+print(f" Accuracy gate passed: {eval_accuracy:.4f}")
 
 
 # === DEPLOYMENT GATE 2: Inference Determinism (Same Image → Same Output) ===
 
-print("🔁 Running inference determinism gate")
+print(" Running inference determinism gate")
 
 # Get one image
 for images, labels in eval_ds.take(1):
@@ -257,11 +257,11 @@ mlflow.log_metric("determinism_max_abs_diff", max_diff)
 if max_diff > TOLERANCE:
     mlflow.log_param("determinism_gate", "failed")
     raise RuntimeError(
-        f"❌ Determinism gate failed: max diff {max_diff} > {TOLERANCE}"
+        f" Determinism gate failed: max diff {max_diff} > {TOLERANCE}"
     )
 
 mlflow.log_param("determinism_gate", "passed")
-print("✅ Determinism gate passed")
+print(" Determinism gate passed")
 
 
 # === DEPLOYMENT GATE 3: Single Image Inference Latency ===
@@ -283,17 +283,17 @@ mlflow.log_metric("single_image_latency_ms", latency_ms)
 if latency_ms > LATENCY_THRESHOLD_MS:
     mlflow.log_param("latency_gate", "failed")
     raise RuntimeError(
-        f"❌ Latency gate failed: {latency_ms:.2f} ms > {LATENCY_THRESHOLD_MS} ms"
+        f" Latency gate failed: {latency_ms:.2f} ms > {LATENCY_THRESHOLD_MS} ms"
     )
 
 mlflow.log_param("latency_gate", "passed")
-print(f"✅ Latency gate passed: {latency_ms:.2f} ms")
+print(f" Latency gate passed: {latency_ms:.2f} ms")
 
 
 # === FINAL DEPLOYMENT DECISION ===
 
-print("🚀 MODEL PASSED ALL DEPLOYMENT GATES")
-mlflow.log_param("deployment_ready", "yes ✅")
+print(" MODEL PASSED ALL DEPLOYMENT GATES")
+mlflow.log_param("deployment_ready", "yes ")
 
 
 
