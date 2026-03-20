@@ -1,51 +1,44 @@
 name: Train and Test Model
 
 on:
-  workflow_dispatch:   # manual trigger instead of push
+  workflow_dispatch:
 
 jobs:
-  train-test:
-    runs-on: self-hosted  # Use your self-hosted runner
+  train:
+    runs-on: self-hosted
 
     steps:
-      # Step 1: Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
 
-      # Step 2: Set up Conda environment
       - name: Set up Conda
         shell: cmd
         run: |
-          @echo off
-          REM Initialize Conda for CMD
           call C:\Users\Vivek.Sadarahalli\AppData\Local\anaconda3\condabin\conda.bat init cmd.exe
-          REM Activate the environment
           call conda activate demo_training
-          call conda info --envs
-          call python --version
-          call pip --version
 
-      # Step 3: Check Python environment
-      - name: Check Python environment
-        shell: cmd
-        run: |
-          python --version
-          where python
-          pip --version
-          where pip
-
-      # Step 4: Train the model
       - name: Train the model
         shell: cmd
         run: |
           call conda activate demo_training
-          call python scripts/train.py
+          python scripts/train.py
 
-      # Step 5: Evaluate the model
+  eval:
+    runs-on: self-hosted
+    needs: train   #  ensures order
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Conda
+        shell: cmd
+        run: |
+          call C:\Users\Vivek.Sadarahalli\AppData\Local\anaconda3\condabin\conda.bat init cmd.exe
+          call conda activate demo_training
+
       - name: Evaluate the model
         shell: cmd
         run: |
           call conda activate demo_training
-          call python scripts/eval.py
+          python scripts/eval.py
