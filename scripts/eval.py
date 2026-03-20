@@ -266,7 +266,7 @@ print(" Determinism gate passed")
 
 # === DEPLOYMENT GATE 3: Single Image Inference Latency ===
 
-print("⏱ Running single-image inference latency gate")
+print("Running single-image inference latency gate")
 
 # Warm-up run (important for TF)
 _ = model.predict(sample_image)
