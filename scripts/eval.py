@@ -136,7 +136,7 @@ model_path = os.path.join(base_artifact_path, run_id_folder, 'artifacts', 'model
 print("model_path:", model_path)
 
 model = tf.keras.models.load_model(model_path)
-print(f"✅ Loaded model from: {model_path}")
+print(f"Loaded model from: {model_path}")
 
 # === 2. Prepare evaluation dataset ===
 
@@ -209,7 +209,9 @@ log_figure_to_mlflow2(fig, artifact_path="figures", file_name="confusion_matrix.
 #     for metric, value in results.items():
 #         mlflow.log_metric(f"eval_{metric}", value)
 
-mlflow.log_artifact("eval.py")
+#mlflow.log_artifact("eval.py")
+mlflow.log_artifact(os.path.abspath(__file__))
+
 
 
 # === DEPLOYMENT GATE 1: Accuracy ===
