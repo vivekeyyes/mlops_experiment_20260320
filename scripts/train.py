@@ -214,7 +214,8 @@ mlflow.log_params({
     "output_activation": "sigmoid"
 })
 
-mlflow.log_artifact("train.py")
+#mlflow.log_artifact("train.py")
+mlflow.log_artifact(os.path.abspath(__file__))
 
 # Train
 model.fit(
