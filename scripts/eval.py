@@ -162,7 +162,7 @@ model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy']
 # === 3. Evaluate the model ===
 
 results = model.evaluate(eval_ds, return_dict=True)
-print("📊 Evaluation Results:")
+print(" Evaluation Results:")
 for metric, value in results.items():
     print(f"{metric}: {value:.4f}")
 
