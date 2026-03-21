@@ -24,6 +24,8 @@ import time
 import warnings
 warnings.filterwarnings("ignore", message="Corrupt JPEG data")
 
+stopp
+
 run_name = "20260313 trial run 2" #run_name should be same as corresponding training run
 experiment_name = "cat dog classifier eval 20260313"
 
