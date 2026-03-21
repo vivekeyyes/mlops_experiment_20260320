@@ -37,12 +37,11 @@ jobs:
   eval:
     runs-on: self-hosted
 
-    # 👇 ALWAYS keep order dependency
-    needs: train
+    # 👇 Only depend on train when running BOTH
 
-    # 👇 Allow eval-only runs
-    #if: ${{ inputs.job_type == 'eval' || inputs.job_type == 'both' }}
-    if: ${{ inputs.job_type == 'eval' || needs.train.result == 'success' }}
+    needs: ${{ inputs.job_type == 'both' && 'train' || null }}
+
+    if: ${{ inputs.job_type == 'eval' || inputs.job_type == 'both' }}
 
     steps:
       - name: Checkout repository
