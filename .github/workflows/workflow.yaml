@@ -14,6 +14,9 @@ on:
           - both
 
 jobs:
+  # --------------------
+  # TRAIN JOB
+  # --------------------
   train:
     runs-on: self-hosted
     if: ${{ inputs.job_type == 'train' || inputs.job_type == 'both' }}
@@ -34,14 +37,36 @@ jobs:
           call conda activate demo_training
           python scripts/train.py
 
+  # --------------------
+  # EVAL JOB (depends on train if running both)
+  # --------------------
   eval:
     runs-on: self-hosted
+    needs: train
+    if: ${{ inputs.job_type == 'both' }}
 
-    # 👇 Only depend on train when running BOTH
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    needs: ${{ inputs.job_type == 'both' && 'train' || null }}
+      - name: Set up Conda
+        shell: cmd
+        run: |
+          call C:\Users\Vivek.Sadarahalli\AppData\Local\anaconda3\condabin\conda.bat init cmd.exe
+          call conda activate demo_training
 
-    if: ${{ inputs.job_type == 'eval' || inputs.job_type == 'both' }}
+      - name: Evaluate the model
+        shell: cmd
+        run: |
+          call conda activate demo_training
+          python scripts/eval.py
+
+  # --------------------
+  # EVAL ONLY JOB (runs independently)
+  # --------------------
+  eval_only:
+    runs-on: self-hosted
+    if: ${{ inputs.job_type == 'eval' }}
 
     steps:
       - name: Checkout repository
