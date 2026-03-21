@@ -41,7 +41,8 @@ jobs:
     needs: train
 
     # 👇 Allow eval-only runs
-    if: ${{ inputs.job_type == 'eval' || inputs.job_type == 'both' }}
+    #if: ${{ inputs.job_type == 'eval' || inputs.job_type == 'both' }}
+    if: ${{ inputs.job_type == 'eval' || needs.train.result == 'success' }}
 
     steps:
       - name: Checkout repository
