@@ -1,4 +1,4 @@
-name: Train and Test Model
+name: Train and Test Model 20260321
 
 on:
   workflow_dispatch:

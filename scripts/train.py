@@ -1,7 +1,15 @@
-# Mlflow - tracking paramerts and logging artifacts
+"""
+This script implements a training pipeline integrated with MLflow
+for experiment tracking, reproducibility, and artifact management.
+
+
+NOTES:
 # Use unique run_name for each training run
 # Experiment name can be same for all training runs , artifact root location is immutable for the experiment name
 # Backend store uri and artifact location is defined in the script itself, cmd is not required
+# MLflow server is started locally on port 5000
+
+"""
 
 
 import tensorflow as tf
@@ -14,8 +22,29 @@ import tempfile
 from mlflow.tracking import MlflowClient
 import pandas as pd
 
-run_name = "20260313 trial run tag data"
-experiment_name = "cat vs dog classifier experiment trial 20260313 2"
+
+######### CONFIG ############
+
+# mlflow config
+run_name = "20260321 trial run 2"
+experiment_name = "cat vs dog classifier experiment 20260321"
+
+backend_store_uri = "file:///D:/Automation_pipeline/Full_Pipeline/20260321/artifacts/mlruns"
+default_artifact_root = "file:///D:/Automation_pipeline/Full_Pipeline/20260321/artifacts/mlflow_artifacts/Training_runs/"+run_name
+new_artifact_root = default_artifact_root
+
+data_repo_path = r"D:\Automation_pipeline\Full_Pipeline\Dataset\Train_data" # dvc repo
+
+# training config
+dataset_dir = r'D:\Automation_pipeline\Full_Pipeline\Dataset\sample_cata_dog\train'
+batch_size = 16
+img_size = (160, 160)
+epochs = 4
+model_save_dir = 'saved_models'
+
+#--------------------------------------------------------
+
+###### MLFLOW SETUP ##########
 
 # End any active MLflow run
 if mlflow.active_run():
@@ -24,8 +53,8 @@ if mlflow.active_run():
 # Start the MLflow server programmatically
 mlflow_server_command = [
     "mlflow", "server",
-    "--backend-store-uri", "file:///D:/Automation_pipeline/Full_Pipeline/20260311/artifacts/mlruns",
-    "--default-artifact-root", "file:///D:/Automation_pipeline/Full_Pipeline/20260311/artifacts/mlflow_artifacts/Training_runs/"+run_name,
+    "--backend-store-uri", backend_store_uri,
+    "--default-artifact-root", default_artifact_root,
     "--host", "0.0.0.0",
     "--port", "5000"
 ]
@@ -43,7 +72,7 @@ try:
 
     # Define experiment details
     exp_name = experiment_name
-    new_artifact_root = "file:///D:/Automation_pipeline/Full_Pipeline/20260311/artifacts/mlflow_artifacts/Training_runs/"+run_name
+    #new_artifact_root = "file:///D:/Automation_pipeline/Full_Pipeline/20260311/artifacts/mlflow_artifacts/Training_runs/"+run_name
 
     # Check if the experiment exists
     experiment = client.get_experiment_by_name(exp_name)
@@ -72,29 +101,28 @@ try:
 except Exception as e:
     print(f"Error occurred: {e}")
 
+#---------------------------------------------------------
 
+#### CODE and DATA version tracking using commit hash
 def get_git_commit(repo_path):
     return subprocess.check_output(
         ["git", "-C", repo_path, "rev-parse", "HEAD"]
     ).decode("utf-8").strip()
 
-
-data_repo_path = r"D:\Automation_pipeline\Full_Pipeline\Dataset\Train_data"
-
 data_version = get_git_commit(data_repo_path)
 
 mlflow.set_tag("data_repo_commit", data_version)
 
-# Set paths
-dataset_dir = r'D:\Automation_pipeline\Full_Pipeline\Dataset\sample_cata_dog\train'
-batch_size = 16
-img_size = (160, 160)
-epochs = 5
-model_save_dir = 'saved_models'
+# code commit
+commit = subprocess.check_output(
+    ["git", "rev-parse", "HEAD"]
+).decode("utf-8").strip()
 
+mlflow.set_tag("git_commit", commit)
+
+##### Training
 
 # === Custom Callback ===
-
 
 class LogBestModelToMLflow(tf.keras.callbacks.Callback):
     def __init__(self, model_name, classes):
@@ -133,7 +161,6 @@ class LogBestModelToMLflow(tf.keras.callbacks.Callback):
     def on_train_end(self, logs=None):
         if self.best_model is not None:
             timestamp = time.strftime("%Y%m%d_%H%M%S", time.localtime())
-
 
             print(f"Logging best model (val_loss={self.best_val_loss:.4f}) to MLflow...")
             #mlflow.tensorflow.log_model(model=self.best_model, artifact_path = run_name + "/" + "models" + '/' + f"{self.model_name}")
@@ -221,13 +248,14 @@ mlflow.log_artifact(os.path.abspath(__file__))
 model.fit(
     train_ds,
     validation_data=val_ds,
-    epochs=4,
+    epochs=epochs,
     callbacks=[log_best_cb]
     )
 
 
-mlflow.end_run()
+#### stop mlflow server
 
+mlflow.end_run()
 print("Stopping the MLflow server...")
 mlflow_server.terminate()
 mlflow_server.wait()

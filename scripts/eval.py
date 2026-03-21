@@ -1,8 +1,17 @@
-# Mlflow - tracking parameters and logging artifacts
-# Use unique run_name for each eval run, run_name should be same as corresponding training run
-# Experiment name can be same for all training runs , artifact root location is immutable for the experiment name
+"""
+This script implements a model evaluation pipeline integrated with MLflow
+for experiment tracking, reproducibility, and artifact management.
+
+
+NOTES:
+# Run_name should be same as corresponding training run
+# Experiment name can be same for all eval runs , artifact root location is immutable for the experiment name
 # Backend store uri and artifact location is defined in the script itself, cmd is not required
+# MLflow server is started locally on port 5000
+
 # Best model from corresponding training is automatically loaded using run_name, Load the best model from artifact folder
+
+"""
 
 import os
 import io
@@ -25,14 +34,33 @@ import warnings
 warnings.filterwarnings("ignore", message="Corrupt JPEG data")
 
 
-run_name = "20260313 trial run 2" #run_name should be same as corresponding training run
-experiment_name = "cat dog classifier eval 20260313"
+######### CONFIG ############
 
+# mlflow config
+run_name = "20260321 trial run 2"
+experiment_name = "cat vs dog classifier eval 20260321"
+
+backend_store_uri = "file:///D:/Automation_pipeline/Full_Pipeline/20260321/artifacts/mlruns_eval/mlruns"
+default_artifact_root = "file:///D:/Automation_pipeline/Full_Pipeline/20260321/artifacts/mlflow_artifacts/Eval_runs/"+run_name
+new_artifact_root = default_artifact_root
+
+base_artifact_path = "D:/Automation_pipeline/Full_Pipeline/20260321/artifacts/mlflow_artifacts/Training_runs/" + run_name
+
+data_repo_path = r"D:\Automation_pipeline\Full_Pipeline\Dataset\Test_data"
+
+# Eval config
+eval_dataset_dir = r"D:\Automation_pipeline\Full_Pipeline\Dataset\sample_cata_dog\test"
+img_size = (160, 160)
+batch_size = 16
 
 # === Deployment thresholds ===
 ACCURACY_THRESHOLD = 0.50          # example
 LATENCY_THRESHOLD_MS = 200         # example (single image)
 
+
+#--------------------------------------------------------
+
+###### MLFLOW SETUP ##########
 
 # End any active MLflow run
 if mlflow.active_run():
@@ -41,8 +69,8 @@ if mlflow.active_run():
 # Start the MLflow server programmatically
 mlflow_server_command = [
     "mlflow", "server",
-    "--backend-store-uri", "file:///D:/Automation_pipeline/Full_Pipeline/20260311/artifacts/mlruns/eval",
-    "--default-artifact-root", "file:///D:/Automation_pipeline/Full_Pipeline/20260311/artifacts/mlflow_artifacts/Eval_runs/"+run_name,
+    "--backend-store-uri", backend_store_uri,
+    "--default-artifact-root", default_artifact_root,
     "--host", "0.0.0.0",
     "--port", "5000"
 ]
@@ -60,7 +88,7 @@ try:
 
     # Define experiment details
     exp_name = experiment_name
-    new_artifact_root = "file:///D:/Automation_pipeline/Full_Pipeline/20260311/artifacts/mlflow_artifacts/Eval_runs/"+run_name
+    #new_artifact_root = "file:///D:/Automation_pipeline/Full_Pipeline/20260311/artifacts/mlflow_artifacts/Eval_runs/"+run_name
 
     # Check if the experiment exists
     experiment = client.get_experiment_by_name(exp_name)
@@ -105,23 +133,24 @@ def log_figure_to_mlflow2(fig, artifact_path, file_name="figure.png", dpi=300):
 
     plt.close(fig)
 
-
+## code and data version tracking
 def get_git_commit(repo_path):
     return subprocess.check_output(
         ["git", "-C", repo_path, "rev-parse", "HEAD"]
     ).decode("utf-8").strip()
 
 
-data_repo_path = r"D:\Automation_pipeline\Full_Pipeline\Dataset\Test_data"
-
 data_version = get_git_commit(data_repo_path)
 
 mlflow.set_tag("data_repo_commit", data_version)
 
+# code commit
+commit = subprocess.check_output(
+    ["git", "rev-parse", "HEAD"]).decode("utf-8").strip()
+
+mlflow.set_tag("git_commit", commit)
 
 # === 1. Load the best model from artifact folder ===
-
-base_artifact_path = "D:/Automation_pipeline/Full_Pipeline/20260311/artifacts/mlflow_artifacts/Training_runs/" + run_name
 
 run_dirs = [d for d in os.listdir(base_artifact_path) if os.path.isdir(os.path.join(base_artifact_path, d))]
 if not run_dirs:
@@ -140,10 +169,6 @@ model = tf.keras.models.load_model(model_path)
 print(f"Loaded model from: {model_path}")
 
 # === 2. Prepare evaluation dataset ===
-
-eval_dataset_dir = r"D:\Automation_pipeline\Full_Pipeline\Dataset\sample_cata_dog\test"
-img_size = (160, 160)
-batch_size = 16
 
 eval_ds = tf.keras.preprocessing.image_dataset_from_directory(
     eval_dataset_dir,
@@ -213,7 +238,9 @@ log_figure_to_mlflow2(fig, artifact_path="figures", file_name="confusion_matrix.
 #mlflow.log_artifact("eval.py")
 mlflow.log_artifact(os.path.abspath(__file__))
 
+#--------------------------------------------------------
 
+# Test cases
 
 # === DEPLOYMENT GATE 1: Accuracy ===
 
@@ -296,11 +323,7 @@ print(f" Latency gate passed: {latency_ms:.2f} ms")
 print(" MODEL PASSED ALL DEPLOYMENT GATES")
 mlflow.log_param("deployment_ready", "yes ")
 
-
-
 mlflow.end_run()
-
-
 
 print("Stopping the MLflow server...")
 
