@@ -240,89 +240,113 @@ mlflow.log_artifact(os.path.abspath(__file__))
 
 #--------------------------------------------------------
 
-# Test cases
+# ==============================
+# Test Cases + Summary Logging
+# ==============================
 
-# === DEPLOYMENT GATE 1: Accuracy ===
+test_summary = {}
+all_passed = True
 
 mlflow.log_param("ACCURACY_THRESHOLD", ACCURACY_THRESHOLD)
 mlflow.log_param("LATENCY_THRESHOLD_MS", LATENCY_THRESHOLD_MS)
 
-eval_accuracy = results.get("accuracy")
 
+# === DEPLOYMENT GATE 1: Accuracy ===
+
+eval_accuracy = results.get("accuracy")
 mlflow.log_metric("eval_accuracy", eval_accuracy)
 
 if eval_accuracy < ACCURACY_THRESHOLD:
+    test_summary["accuracy_gate"] = f"FAILED ({eval_accuracy:.4f} < {ACCURACY_THRESHOLD})"
     mlflow.log_param("accuracy_gate", "failed")
-    raise RuntimeError(
-        f" Accuracy gate failed: {eval_accuracy:.4f} < {ACCURACY_THRESHOLD}"
-    )
+    all_passed = False
+    print(f" Accuracy gate FAILED: {eval_accuracy:.4f}")
+else:
+    test_summary["accuracy_gate"] = f"PASSED ({eval_accuracy:.4f})"
+    mlflow.log_param("accuracy_gate", "passed")
+    print(f" Accuracy gate passed: {eval_accuracy:.4f}")
 
-mlflow.log_param("accuracy_gate", "passed")
-print(f" Accuracy gate passed: {eval_accuracy:.4f}")
 
+# === DEPLOYMENT GATE 2: Determinism ===
 
-# === DEPLOYMENT GATE 2: Inference Determinism (Same Image → Same Output) ===
+print("Running inference determinism gate")
 
-print(" Running inference determinism gate")
-
-# Get one image
 for images, labels in eval_ds.take(1):
     sample_image = images[0:1]
     break
 
-# Ensure inference mode
 pred1 = model.predict(sample_image)
 pred2 = model.predict(sample_image)
 
-# Numerical tolerance
 TOLERANCE = 1e-6
-
-diff = np.abs(pred1 - pred2)
-max_diff = float(np.max(diff))
+max_diff = float(np.max(np.abs(pred1 - pred2)))
 
 mlflow.log_metric("determinism_max_abs_diff", max_diff)
 
 if max_diff > TOLERANCE:
+    test_summary["determinism_gate"] = f"FAILED (max diff {max_diff})"
     mlflow.log_param("determinism_gate", "failed")
-    raise RuntimeError(
-        f" Determinism gate failed: max diff {max_diff} > {TOLERANCE}"
-    )
+    all_passed = False
+    print(f" Determinism gate FAILED: {max_diff}")
+else:
+    test_summary["determinism_gate"] = "PASSED"
+    mlflow.log_param("determinism_gate", "passed")
+    print(" Determinism gate passed")
 
-mlflow.log_param("determinism_gate", "passed")
-print(" Determinism gate passed")
 
-
-# === DEPLOYMENT GATE 3: Single Image Inference Latency ===
+# === DEPLOYMENT GATE 3: Latency ===
 
 print("Running single-image inference latency gate")
 
-# Warm-up run (important for TF)
+# Warm-up
 _ = model.predict(sample_image)
 
-# Timed inference
 start_time = time.perf_counter()
 _ = model.predict(sample_image)
 end_time = time.perf_counter()
 
 latency_ms = (end_time - start_time) * 1000
-
 mlflow.log_metric("single_image_latency_ms", latency_ms)
 
 if latency_ms > LATENCY_THRESHOLD_MS:
+    test_summary["latency_gate"] = f"FAILED ({latency_ms:.2f} ms > {LATENCY_THRESHOLD_MS})"
     mlflow.log_param("latency_gate", "failed")
-    raise RuntimeError(
-        f" Latency gate failed: {latency_ms:.2f} ms > {LATENCY_THRESHOLD_MS} ms"
-    )
+    all_passed = False
+    print(f" Latency gate FAILED: {latency_ms:.2f} ms")
+else:
+    test_summary["latency_gate"] = f"PASSED ({latency_ms:.2f} ms)"
+    mlflow.log_param("latency_gate", "passed")
+    print(f" Latency gate passed: {latency_ms:.2f} ms")
 
-mlflow.log_param("latency_gate", "passed")
-print(f" Latency gate passed: {latency_ms:.2f} ms")
+
+# === FINAL SUMMARY ===
+
+summary_text = "TEST CASE SUMMARY\n"
+summary_text += "====================\n\n"
+
+for test, result in test_summary.items():
+    summary_text += f"{test}: {result}\n"
+
+if all_passed:
+    summary_text += "\nFINAL STATUS: PASSED (READY FOR DEPLOYMENT)\n"
+    mlflow.log_param("deployment_ready", "yes")
+    print(" MODEL PASSED ALL DEPLOYMENT GATES")
+else:
+    summary_text += "\nFINAL STATUS: FAILED (NOT READY FOR DEPLOYMENT)\n"
+    mlflow.log_param("deployment_ready", "no")
+    print(" MODEL FAILED DEPLOYMENT GATES")
 
 
-# === FINAL DEPLOYMENT DECISION ===
+# === SAVE + LOG SUMMARY ===
 
-print(" MODEL PASSED ALL DEPLOYMENT GATES")
-mlflow.log_param("deployment_ready", "yes ")
+summary_file = "test_summary.txt"
 
+with open(summary_file, "w") as f:
+    f.write(summary_text)
+
+mlflow.log_artifact(summary_file, artifact_path="test_results")
+
+os.remove(summary_file)
 mlflow.end_run()
 
 print("Stopping the MLflow server...")
