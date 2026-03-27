@@ -26,11 +26,11 @@ import pandas as pd
 ######### CONFIG ############
 
 # mlflow config
-run_name = "20260327 demo run"
-experiment_name = "cat vs dog classifier demo training 20260327"
+run_name = "20260327 demo run v2"
+experiment_name = "cat vs dog classifier demo training 20260327 v2"
 
-backend_store_uri = "file:///D:/Automation_pipeline/Full_Pipeline/20260327/artifacts/mlruns"
-default_artifact_root = "file:///D:/Automation_pipeline/Full_Pipeline/20260327/artifacts/mlflow_artifacts/Training_runs/"+run_name
+backend_store_uri = "file:///D:/Automation_pipeline/Full_Pipeline/20260327_v2/artifacts/mlruns"
+default_artifact_root = "file:///D:/Automation_pipeline/Full_Pipeline/20260327_v2/artifacts/mlflow_artifacts/Training_runs/"+run_name
 new_artifact_root = default_artifact_root
 
 data_repo_path = r"D:\Automation_pipeline\Full_Pipeline\Dataset\Train_data" # dvc repo
