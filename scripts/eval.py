@@ -37,14 +37,14 @@ warnings.filterwarnings("ignore", message="Corrupt JPEG data")
 ######### CONFIG ############
 
 # mlflow config
-run_name = "20260322 trial run"
-experiment_name = "cat vs dog classifier eval 20260322"
+run_name = "20260327 demo run"
+experiment_name = "cat vs dog classifier demo eval 20260327"
 
-backend_store_uri = "file:///D:/Automation_pipeline/Full_Pipeline/20260322/artifacts/mlruns_eval/mlruns"
-default_artifact_root = "file:///D:/Automation_pipeline/Full_Pipeline/20260322/artifacts/mlflow_artifacts/Eval_runs/"+run_name
+backend_store_uri = "file:///D:/Automation_pipeline/Full_Pipeline/20260327/artifacts/mlruns_eval/mlruns"
+default_artifact_root = "file:///D:/Automation_pipeline/Full_Pipeline/20260327/artifacts/mlflow_artifacts/Eval_runs/"+run_name
 new_artifact_root = default_artifact_root
 
-base_artifact_path = "D:/Automation_pipeline/Full_Pipeline/20260322/artifacts/mlflow_artifacts/Training_runs/" + run_name
+base_artifact_path = "D:/Automation_pipeline/Full_Pipeline/20260327/artifacts/mlflow_artifacts/Training_runs/" + run_name
 
 data_repo_path = r"D:\Automation_pipeline\Full_Pipeline\Dataset\Test_data"
 
