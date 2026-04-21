@@ -26,8 +26,8 @@ import pandas as pd
 ######### CONFIG ############
 
 # mlflow config
-run_name = "20260421 demo run"
-experiment_name = "20260421 demo train"
+run_name = "20260421 demo run 2"
+experiment_name = "20260421 demo train 2"
 
 backend_store_uri = "file:///D:/Automation_pipeline/Full_Pipeline/Artifact_storage/20260421/mlruns_train/mlruns"
 default_artifact_root = "file:///D:/Automation_pipeline/Full_Pipeline/Artifact_storage/20260421/Training_runs/"+run_name
@@ -37,7 +37,7 @@ data_repo_path = r"D:\Automation_pipeline\Full_Pipeline\Dataset\Train_data" # dv
 
 # training config
 dataset_dir = r'D:\Automation_pipeline\Full_Pipeline\Dataset\sample_cata_dog\train'
-batch_size = 32
+batch_size = 16
 img_size = (160, 160)
 epochs = 4
 model_save_dir = 'saved_models'
