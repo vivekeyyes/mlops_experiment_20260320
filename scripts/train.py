@@ -26,8 +26,8 @@ import pandas as pd
 ######### CONFIG ############
 
 # mlflow config
-run_name = "20260421 demo run 2"
-experiment_name = "20260421 demo train 2"
+run_name = "20260421 demo run 3"
+experiment_name = "20260421 demo train 3"
 
 backend_store_uri = "file:///D:/Automation_pipeline/Full_Pipeline/Artifact_storage/20260421/mlruns_train/mlruns"
 default_artifact_root = "file:///D:/Automation_pipeline/Full_Pipeline/Artifact_storage/20260421/Training_runs/"+run_name

@@ -37,8 +37,8 @@ warnings.filterwarnings("ignore", message="Corrupt JPEG data")
 ######### CONFIG ############
 
 # mlflow config
-run_name = "20260421 demo run 2"
-experiment_name = "20260421 demo eval 2"
+run_name = "20260421 demo run 3"
+experiment_name = "20260421 demo eval 3"
 
 
 backend_store_uri = "file:///D:/Automation_pipeline/Full_Pipeline/Artifact_storage/20260421/mlruns_eval/mlruns"
